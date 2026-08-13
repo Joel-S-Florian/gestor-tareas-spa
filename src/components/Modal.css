@@ -1,0 +1,146 @@
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  z-index: 100;
+}
+
+.modal {
+  width: 100%;
+  max-width: 460px;
+  max-height: 85vh;
+  overflow-y: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.modal__title {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.modal__close {
+  background: transparent;
+  border: none;
+  color: var(--color-text-dim);
+  font-size: 16px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 4px;
+}
+
+.modal__close:hover {
+  color: var(--color-text);
+}
+
+.modal__body {
+  padding: 20px;
+}
+
+/* Reutilizados dentro de los formularios dentro de modales */
+.form-field {
+  margin-bottom: 14px;
+}
+
+.form-label {
+  display: block;
+  font-size: 13px;
+  color: var(--color-text-dim);
+  margin-bottom: 6px;
+}
+
+.form-input,
+.form-select,
+.form-textarea {
+  width: 100%;
+  padding: 9px 12px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 70px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.btn {
+  padding: 9px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: opacity 0.15s, background 0.15s;
+}
+
+.btn--primary {
+  background: var(--color-accent);
+  color: white;
+}
+
+.btn--primary:hover:not(:disabled) {
+  background: var(--color-accent-hover);
+}
+
+.btn--ghost {
+  background: transparent;
+  border-color: var(--color-border);
+  color: var(--color-text-dim);
+}
+
+.btn--ghost:hover {
+  color: var(--color-text);
+}
+
+.btn--danger {
+  background: transparent;
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.form-error {
+  background: #ef444420;
+  border: 1px solid #ef444450;
+  color: #fca5a5;
+  font-size: 13px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 14px;
+}
