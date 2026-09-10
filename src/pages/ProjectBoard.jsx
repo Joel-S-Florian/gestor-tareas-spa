@@ -182,7 +182,7 @@ export default function ProjectBoard() {
 
         <div className="board__filters">
           <button className="btn btn--ghost" onClick={() => setModalMiembrosAbierto(true)}>
-            👥 Miembros ({miembros.length})
+            Miembros ({miembros.length})
           </button>
           <select className="form-select" value={filtroPrioridad} onChange={(e) => setFiltroPrioridad(e.target.value)}>
             <option value="">Toda prioridad</option>
@@ -236,7 +236,7 @@ export default function ProjectBoard() {
           puedeEditar={true}
           onClose={() => setModalNuevaAbierto(false)}
           onGuardado={handleTareaGuardada}
-          onEliminado={() => {}}
+          onEliminado={() => { }}
         />
       )}
 
