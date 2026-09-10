@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Trash2, Paperclip, MessageSquare, Upload, Download, X, Check, Calendar, Flag } from 'lucide-react';
 import Modal from './Modal';
 import { tareaService } from '../services/tareaService';
 import { comentarioService } from '../services/comentarioService';
@@ -258,8 +259,8 @@ export default function TaskModal({ tarea, proyectoId, miembros, puedeEditar, on
 
         <div className="form-actions" style={{ justifyContent: !esNueva ? 'space-between' : 'flex-end' }}>
           {!esNueva && puedeEditar && (
-            <button type="button" className="btn btn--danger" onClick={handleEliminar} disabled={enviando}>
-              Eliminar
+            <button type="button" className="btn btn--danger" onClick={handleEliminar} disabled={enviando} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <Trash2 size={14} /> Eliminar
             </button>
           )}
           <div style={{ display: 'flex', gap: 10 }}>
@@ -267,8 +268,8 @@ export default function TaskModal({ tarea, proyectoId, miembros, puedeEditar, on
               {puedeEditar ? 'Cancelar' : 'Cerrar'}
             </button>
             {puedeEditar && (
-              <button type="submit" className="btn btn--primary" disabled={enviando}>
-                {enviando ? 'Guardando…' : esNueva ? 'Crear tarea' : 'Guardar cambios'}
+              <button type="submit" className="btn btn--primary" disabled={enviando} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <Check size={14} /> {enviando ? 'Guardando...' : esNueva ? 'Crear tarea' : 'Guardar cambios'}
               </button>
             )}
           </div>
@@ -280,8 +281,8 @@ export default function TaskModal({ tarea, proyectoId, miembros, puedeEditar, on
           <hr style={{ border: 'none', borderTop: '1px solid var(--color-border)', margin: '22px 0' }} />
 
           <section style={{ marginBottom: 22 }}>
-            <h3 style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-dim)', marginBottom: 10 }}>
-              Adjuntos ({adjuntos.length})
+            <h3 style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-dim)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Paperclip size={14} /> Adjuntos ({adjuntos.length})
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 10 }}>
               {adjuntos.map((a) => (
@@ -289,13 +290,13 @@ export default function TaskModal({ tarea, proyectoId, miembros, puedeEditar, on
                   <button
                     type="button"
                     onClick={() => adjuntoService.descargar(a.id, a.nombreArchivo)}
-                    style={{ background: 'none', border: 'none', color: 'var(--color-accent)', cursor: 'pointer', padding: 0, textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                    style={{ background: 'none', border: 'none', color: 'var(--color-accent)', cursor: 'pointer', padding: 0, textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 6 }}
                   >
-                    📎 {a.nombreArchivo} <span style={{ color: 'var(--color-text-faint)' }}>({formatearTamano(a.tamanoBytes)})</span>
+                    <Paperclip size={12} /> {a.nombreArchivo} <span style={{ color: 'var(--color-text-faint)' }}>({formatearTamano(a.tamanoBytes)})</span> <Download size={12} />
                   </button>
                   {puedeEditar && (
-                    <button type="button" onClick={() => handleEliminarAdjunto(a.id)} style={{ background: 'none', border: 'none', color: 'var(--color-text-faint)', cursor: 'pointer' }}>
-                      ✕
+                    <button type="button" onClick={() => handleEliminarAdjunto(a.id)} style={{ background: 'none', border: 'none', color: 'var(--color-text-faint)', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
+                      <X size={14} />
                     </button>
                   )}
                 </div>
@@ -303,16 +304,16 @@ export default function TaskModal({ tarea, proyectoId, miembros, puedeEditar, on
               {adjuntos.length === 0 && <p style={{ fontSize: 12, color: 'var(--color-text-faint)', margin: 0 }}>Sin adjuntos</p>}
             </div>
             {puedeEditar && (
-              <label className="btn btn--ghost" style={{ display: 'inline-block', cursor: 'pointer' }}>
-                {subiendoArchivo ? 'Subiendo…' : '+ Subir archivo (máx. 5MB, imágenes o PDF)'}
+              <label className="btn btn--ghost" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+                <Upload size={14} /> {subiendoArchivo ? 'Subiendo...' : 'Adjuntar archivo (img/pdf · max 5 MB)'}
                 <input type="file" accept="image/jpeg,image/png,image/gif,image/webp,application/pdf" onChange={handleSubirArchivo} disabled={subiendoArchivo} style={{ display: 'none' }} />
               </label>
             )}
           </section>
 
           <section>
-            <h3 style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-dim)', marginBottom: 10 }}>
-              Comentarios ({comentarios.length})
+            <h3 style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-dim)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <MessageSquare size={14} /> Comentarios ({comentarios.length})
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 12, maxHeight: 200, overflowY: 'auto' }}>
               {comentarios.map((c) => (

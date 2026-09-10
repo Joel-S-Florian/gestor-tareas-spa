@@ -1,29 +1,78 @@
 :root {
-  /* Paleta: neutro tipo pizarra + acento índigo (coherente con el color por defecto de Proyecto en el backend) */
-  --color-bg: #0f1115;
-  --color-surface: #171a21;
-  --color-surface-raised: #1f232c;
-  --color-border: #2a2f3a;
-  --color-text: #e8e9ed;
-  --color-text-dim: #9096a5;
-  --color-text-faint: #5c6272;
+  /* TabTask Design Tokens — Light (default) */
+  --bg-primary: #F8FAFC;
+  --bg-secondary: #FFFFFF;
+  --bg-tertiary: #F1F5F9;
+  --text-primary: #0F172A;
+  --text-secondary: #64748B;
+  --text-muted: #94A3B8;
+  --border: #E2E8F0;
+  --accent: #FF5733;
+  --accent-hover: #E64A2B;
+  --accent-dim: #FF57331A;
+  --success: #10B981;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+  --info: #3B82F6;
 
-  --color-accent: #6366f1;
-  --color-accent-hover: #7678f5;
-  --color-accent-dim: #6366f126;
-
-  --color-success: #22c55e;
-  --color-warning: #f59e0b;
-  --color-danger: #ef4444;
+  /* Compatibility aliases for legacy components */
+  --color-bg: var(--bg-primary);
+  --color-surface: var(--bg-secondary);
+  --color-surface-raised: var(--bg-tertiary);
+  --color-border: var(--border);
+  --color-text: var(--text-primary);
+  --color-text-dim: var(--text-secondary);
+  --color-text-faint: var(--text-muted);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-dim: var(--accent-dim);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
 
   --font-ui: 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
 
   --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
 
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.2);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-modal: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="dark"] {
+  --bg-primary: #0F172A;
+  --bg-secondary: #1E293B;
+  --bg-tertiary: #334155;
+  --text-primary: #F8FAFC;
+  --text-secondary: #CBD5E1;
+  --text-muted: #64748B;
+  --border: #334155;
+  --accent: #FF6B4A;
+  --accent-hover: #FF8566;
+  --accent-dim: #FF6B4A1A;
+  --success: #34D399;
+  --warning: #FBBF24;
+  --danger: #F87171;
+  --info: #60A5FA;
+
+  --color-bg: var(--bg-primary);
+  --color-surface: var(--bg-secondary);
+  --color-surface-raised: var(--bg-tertiary);
+  --color-border: var(--border);
+  --color-text: var(--text-primary);
+  --color-text-dim: var(--text-secondary);
+  --color-text-faint: var(--text-muted);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-dim: var(--accent-dim);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.25);
+  --shadow-modal: 0 8px 30px rgba(0, 0, 0, 0.4);
 }
 
 * {
@@ -37,9 +86,10 @@ html, body, #root {
 body {
   margin: 0;
   font-family: var(--font-ui);
-  background: var(--color-bg);
-  color: var(--color-text);
+  background: var(--bg-primary);
+  color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 a {
@@ -51,20 +101,19 @@ button {
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
 ::selection {
-  background: var(--color-accent-dim);
+  background: var(--accent-dim);
 }
 
-/* Scrollbar discreto */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--color-border);
+  background: var(--border);
   border-radius: 8px;
 }
