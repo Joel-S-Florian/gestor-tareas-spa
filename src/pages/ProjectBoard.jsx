@@ -38,7 +38,7 @@ export default function ProjectBoard() {
 
   const puedeEditar = proyecto?.miRol === 'Owner' || proyecto?.miRol === 'Editor';
 
-  useEffect(() => { document.title = proyecto ? `TabTask \u00B7 ${proyecto.nombre}` : 'TabTask \u00B7 Proyecto'; }, [proyecto]);
+  useEffect(() => { document.title = proyecto ? `Gestor de Tareas \u00B7 ${proyecto.nombre}` : 'Gestor de Tareas \u00B7 Proyecto'; }, [proyecto]);
 
   const cargarTodo = useCallback(async () => {
     setCargando(true);
@@ -199,7 +199,7 @@ export default function ProjectBoard() {
         {!puedeEditar && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--text-muted)' }}><Eye size={12} /> Solo lectura ({proyecto.miRol})</span>}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, alignItems: 'start' }}>
+      <div className="board-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, alignItems: 'start' }}>
         {COLUMNAS.map((col) => (
           <KanbanColumn
             key={col.estado}

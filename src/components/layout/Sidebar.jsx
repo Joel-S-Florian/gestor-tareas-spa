@@ -45,6 +45,7 @@ export default function Sidebar() {
 
   return (
     <aside
+      className="app-sidebar"
       style={{
         width: 240,
         minHeight: '100vh',
@@ -60,7 +61,7 @@ export default function Sidebar() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '4px 6px' }}>
         <Logo />
         <div>
-          <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--text-primary)', lineHeight: 1 }}>TabTask</div>
+          <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--text-primary)', lineHeight: 1 }}>Gestor de Tareas</div>
           <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Gestion de proyectos y tareas</div>
         </div>
       </div>

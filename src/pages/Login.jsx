@@ -26,7 +26,7 @@ export default function Login() {
   const location = useLocation();
   const destino = location.state?.from?.pathname || '/';
 
-  useEffect(() => { document.title = 'TabTask \u00B7 Iniciar sesion'; }, []);
+  useEffect(() => { document.title = 'Gestor de Tareas \u00B7 Iniciar sesion'; }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -41,7 +41,7 @@ export default function Login() {
       <form className="auth__card" onSubmit={handleSubmit} style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 12, padding: 28, width: '100%', maxWidth: 400, boxShadow: 'var(--shadow-card)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center', marginBottom: 12 }}>
           <TabTaskLogo />
-          <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>TabTask</span>
+          <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>Gestor de Tareas</span>
         </div>
         <h1 className="auth__title" style={{ textAlign: 'center', fontSize: 20, fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 4px' }}>Inicia sesion</h1>
         <p className="auth__subtitle" style={{ textAlign: 'center', fontSize: 13, color: 'var(--text-secondary)', margin: '0 0 20px' }}>Gestion de proyectos y tareas</p>

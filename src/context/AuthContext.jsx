@@ -1,44 +1,45 @@
-import { createContext, useState, useCallback } from 'react';
+import { createContext, useState, useCallback, useEffect } from 'react';
 import { authService } from '../services/authService';
-import { tokenStorage } from '../services/api';
+import { EVENTO_SESION_EXPIRADA } from '../services/api';
 import { mensajeDeError } from '../utils/mensajeDeError';
 
 export const AuthContext = createContext(null);
 
-// No hay endpoint "quién soy", así que el usuario se guarda en localStorage
-// junto a los tokens para sobrevivir recargas de página.
-const USER_KEY = 'gt_usuario';
-
-function leerUsuarioGuardado() {
-  try {
-    const raw = localStorage.getItem(USER_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
-
+// La sesión no se guarda en el navegador: al abrir la app se pide a la API,
+// con la cookie HttpOnly, un access token y el usuario (restaurar()).
 export function AuthProvider({ children }) {
-  const [usuario, setUsuario] = useState(leerUsuarioGuardado);
+  const [usuario, setUsuario] = useState(null);
+  const [iniciando, setIniciando] = useState(true);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState(null);
 
-  const guardarUsuario = (u) => {
-    setUsuario(u);
-    localStorage.setItem(USER_KEY, JSON.stringify(u));
-  };
+  useEffect(() => {
+    // Versiones anteriores guardaban los tokens aquí: se borran para no dejarlos expuestos.
+    ['gt_access_token', 'gt_refresh_token', 'gt_usuario'].forEach((k) => localStorage.removeItem(k));
 
-  // Actualiza nombre/email tras editar el perfil (mantiene en sync localStorage y Navbar).
-  const actualizarUsuario = useCallback((u) => {
-    guardarUsuario({ ...usuario, ...u });
-  }, [usuario]);
+    let vivo = true;
+    authService.restaurar().then((u) => {
+      if (vivo) { setUsuario(u); setIniciando(false); }
+    });
+    return () => { vivo = false; };
+  }, []);
 
-  const login = useCallback(async (email, password) => {
+  // El interceptor avisa cuando no pudo renovar la sesión.
+  useEffect(() => {
+    const alExpirar = () => setUsuario(null);
+    window.addEventListener(EVENTO_SESION_EXPIRADA, alExpirar);
+    return () => window.removeEventListener(EVENTO_SESION_EXPIRADA, alExpirar);
+  }, []);
+
+  // Actualiza nombre/email tras editar el perfil (mantiene en sync el Navbar).
+  const actualizarUsuario = useCallback((u) => setUsuario((actual) => ({ ...actual, ...u })), []);
+
+  const entrar = useCallback(async (accion) => {
     setCargando(true);
     setError(null);
     try {
-      const u = await authService.login(email, password);
-      guardarUsuario(u);
+      const u = await accion();
+      setUsuario(u);
       return u;
     } catch (err) {
       setError(mensajeDeError(err));
@@ -48,30 +49,17 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  const registrar = useCallback(async (nombre, email, password) => {
-    setCargando(true);
-    setError(null);
-    try {
-      const u = await authService.register(nombre, email, password);
-      guardarUsuario(u);
-      return u;
-    } catch (err) {
-      setError(mensajeDeError(err));
-      throw err;
-    } finally {
-      setCargando(false);
-    }
-  }, []);
+  const login = useCallback((email, password) => entrar(() => authService.login(email, password)), [entrar]);
+  const registrar = useCallback((nombre, email, password) => entrar(() => authService.register(nombre, email, password)), [entrar]);
 
   const logout = useCallback(async () => {
-    await authService.logout();
-    setUsuario(null);
-    localStorage.removeItem(USER_KEY);
+    try { await authService.logout(); } finally { setUsuario(null); }
   }, []);
 
   const value = {
     usuario,
-    estaAutenticado: Boolean(usuario) && Boolean(tokenStorage.getAccessToken()),
+    estaAutenticado: Boolean(usuario),
+    iniciando,
     cargando,
     error,
     login,

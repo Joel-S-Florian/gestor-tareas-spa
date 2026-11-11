@@ -7,7 +7,7 @@ function breadcrumbFor(pathname) {
   if (pathname === '/') return [{ label: 'Dashboard' }];
   if (pathname.startsWith('/proyectos/')) return [{ label: 'Dashboard', to: '/' }, { label: 'Proyecto' }];
   if (pathname.startsWith('/perfil')) return [{ label: 'Mi perfil' }];
-  return [{ label: 'TabTask' }];
+  return [{ label: 'Gestor de Tareas' }];
 }
 
 export default function Header() {

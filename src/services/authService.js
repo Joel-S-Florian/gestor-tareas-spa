@@ -1,28 +1,33 @@
-import api, { tokenStorage } from './api';
+import api, { sesion, renovarSesion } from './api';
 
 export const authService = {
   async login(email, password) {
     const { data } = await api.post('/auth/login', { email, password });
-    tokenStorage.setTokens(data.accessToken, data.refreshToken);
+    sesion.setAccessToken(data.accessToken);
     return data.usuario;
   },
 
   async register(nombre, email, password) {
     const { data } = await api.post('/auth/register', { nombre, email, password });
-    tokenStorage.setTokens(data.accessToken, data.refreshToken);
+    sesion.setAccessToken(data.accessToken);
     return data.usuario;
   },
 
-  async logout() {
-    const refreshToken = tokenStorage.getRefreshToken();
+  // Recupera la sesión al abrir la app, con la cookie. Devuelve el usuario o null.
+  async restaurar() {
     try {
-      if (refreshToken) await api.post('/auth/logout', { refreshToken });
-    } finally {
-      tokenStorage.clear();
+      const data = await renovarSesion();
+      return data.usuario;
+    } catch {
+      return null;
     }
   },
 
-  estaAutenticado() {
-    return Boolean(tokenStorage.getAccessToken());
+  async logout() {
+    try {
+      await api.post('/auth/logout');
+    } finally {
+      sesion.clear();
+    }
   }
 };

@@ -62,7 +62,7 @@ export default function Dashboard() {
   ] : [];
 
   // dynamic document title
-  useEffect(() => { document.title = 'TabTask \u00B7 Dashboard'; }, []);
+  useEffect(() => { document.title = 'Gestor de Tareas \u00B7 Dashboard'; }, []);
 
   return (
     <AppLayout>
