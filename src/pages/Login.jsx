@@ -58,9 +58,11 @@ export default function Login() {
           <input id="password" className="auth__input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required autoComplete="current-password" style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-primary)', color: 'var(--text-primary)', fontSize: 14 }} />
         </div>
 
-        <button type="button" onClick={() => { setEmail('joel@demo.com'); setPassword('Demo1234!'); }} style={{ marginBottom: 14, fontSize: 12, background: 'transparent', border: 'none', color: 'var(--accent)', cursor: 'pointer', textDecoration: 'underline' }}>
-          Autocompletar demo
-        </button>
+        {import.meta.env.VITE_DEMO === 'true' && (
+          <button type="button" onClick={() => { setEmail('demo@demo.com'); setPassword('demo123'); }} style={{ marginBottom: 14, fontSize: 12, background: 'transparent', border: 'none', color: 'var(--accent)', cursor: 'pointer', textDecoration: 'underline' }}>
+            Autocompletar demo
+          </button>
+        )}
 
         <button className="auth__submit" type="submit" disabled={cargando} style={{ width: '100%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '10px 14px', borderRadius: 8, background: 'var(--accent)', color: '#fff', border: 'none', fontSize: 14, fontWeight: 600, cursor: 'pointer', opacity: cargando ? 0.7 : 1 }}>
           {cargando ? <><Loader2 size={16} /> Entrando...</> : <><LogIn size={16} /> Entrar</>}
