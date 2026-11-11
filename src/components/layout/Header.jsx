@@ -1,6 +1,7 @@
 import { useLocation, Link } from 'react-router-dom';
 import { ChevronDown } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
+import Avisos from './Avisos';
 import { useAuth } from '../../hooks/useAuth';
 
 function breadcrumbFor(pathname) {
@@ -40,6 +41,7 @@ export default function Header() {
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <ThemeToggle />
+        {usuario && <Avisos />}
         {usuario && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-secondary)' }}>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>

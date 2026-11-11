@@ -8,8 +8,13 @@ export default function KanbanColumn({ titulo, estado, tareas, colorDot, onTaskC
   const handleDragOver = (e) => { if (puedeEditar) e.preventDefault(); };
   const handleDrop = (e) => {
     e.preventDefault();
-    const tareaId = e.dataTransfer.getData('text/tarea-id');
-    if (tareaId) onDrop(Number(tareaId), estado);
+    const tareaId = Number(e.dataTransfer.getData('text/tarea-id'));
+    if (!tareaId) return;
+    // Posición = cuántas tarjetas (sin contar la arrastrada) quedan por encima del puntero.
+    const posicion = [...e.currentTarget.querySelectorAll('.task-card')]
+      .filter((el) => Number(el.dataset.id) !== tareaId)
+      .filter((el) => { const r = el.getBoundingClientRect(); return e.clientY > r.top + r.height / 2; }).length;
+    onDrop(tareaId, estado, posicion);
   };
   const Icon = ICON_BY_STATE[estado] || Circle;
 

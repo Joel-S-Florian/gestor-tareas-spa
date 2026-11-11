@@ -26,6 +26,11 @@ export const tareaService = {
     return data;
   },
 
+  async mover(id, estado, posicion) {
+    const { data } = await api.patch(`/tareas/${id}/mover`, { estado, posicion });
+    return data;
+  },
+
   async eliminar(id) {
     await api.delete(`/tareas/${id}`);
   }

@@ -29,6 +29,7 @@ export default function ProjectBoard() {
   const [filtroPrioridad, setFiltroPrioridad] = useState('');
   const [filtroAsignado, setFiltroAsignado] = useState('');
   const [busqueda, setBusqueda] = useState('');
+  const [soloVencidas, setSoloVencidas] = useState(false);
 
   const [tareaSeleccionada, setTareaSeleccionada] = useState(null);
   const [modalNuevaAbierto, setModalNuevaAbierto] = useState(false);
@@ -62,29 +63,40 @@ export default function ProjectBoard() {
     const filtro = { page: 1, pageSize: 100 };
     if (filtroPrioridad) filtro.prioridad = filtroPrioridad;
     if (filtroAsignado) filtro.asignadoAId = filtroAsignado;
+    if (soloVencidas) filtro.vencidas = true;
     try {
       const resultado = await tareaService.listarPorProyecto(proyectoId, filtro);
       setTareas(resultado.items);
     } catch {
       setError('No se pudieron cargar las tareas.');
     }
-  }, [proyectoId, filtroPrioridad, filtroAsignado]);
+  }, [proyectoId, filtroPrioridad, filtroAsignado, soloVencidas]);
 
   useEffect(() => { cargarTodo(); }, [cargarTodo]);
-  useEffect(() => { if (!cargando) cargarTareas(); }, [filtroPrioridad, filtroAsignado]);
+  useEffect(() => { if (!cargando) cargarTareas(); }, [filtroPrioridad, filtroAsignado, soloVencidas]);
 
   const handleDragStart = (e, tarea) => {
     e.dataTransfer.setData('text/tarea-id', String(tarea.id));
   };
 
-  const handleDrop = async (tareaId, nuevoEstado) => {
+  // Con filtros o búsqueda activos la posición visible no equivale a la real: se manda al final.
+  const hayFiltros = Boolean(filtroPrioridad || filtroAsignado || busqueda.trim() || soloVencidas);
+
+  const handleDrop = async (tareaId, nuevoEstado, posicionVisible = 0) => {
     const tarea = tareas.find((t) => t.id === tareaId);
-    if (!tarea || tarea.estado === nuevoEstado) return;
-    setTareas((prev) => prev.map((t) => (t.id === tareaId ? { ...t, estado: nuevoEstado } : t)));
+    if (!tarea || !puedeEditar) return;
+    const posicion = hayFiltros ? 10000 : posicionVisible;
+
+    const anteriores = tareas;
+    const resto = tareas.filter((t) => t.id !== tareaId);
+    const destino = resto.filter((t) => t.estado === nuevoEstado);
+    destino.splice(Math.min(posicion, destino.length), 0, { ...tarea, estado: nuevoEstado });
+    setTareas([...resto.filter((t) => t.estado !== nuevoEstado), ...destino]);
+
     try {
-      await tareaService.cambiarEstado(tareaId, nuevoEstado);
+      await tareaService.mover(tareaId, nuevoEstado, posicion);
     } catch {
-      setTareas((prev) => prev.map((t) => (t.id === tareaId ? { ...t, estado: tarea.estado } : t)));
+      setTareas(anteriores);
     }
   };
 
@@ -196,6 +208,9 @@ export default function ProjectBoard() {
             <option key={m.usuarioId} value={m.usuarioId}>{m.nombre}</option>
           ))}
         </select>
+        <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--text-secondary)', cursor: 'pointer' }}>
+          <input type="checkbox" checked={soloVencidas} onChange={(e) => setSoloVencidas(e.target.checked)} /> Solo vencidas
+        </label>
         {!puedeEditar && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--text-muted)' }}><Eye size={12} /> Solo lectura ({proyecto.miRol})</span>}
       </div>
 

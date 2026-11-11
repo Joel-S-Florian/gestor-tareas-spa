@@ -10,6 +10,7 @@ export default function TaskCard({ tarea, onClick, onDragStart, arrastrable }) {
   return (
     <div
       className="task-card"
+      data-id={tarea.id}
       draggable={arrastrable}
       onDragStart={(e) => onDragStart?.(e, tarea)}
       onClick={() => onClick(tarea)}
