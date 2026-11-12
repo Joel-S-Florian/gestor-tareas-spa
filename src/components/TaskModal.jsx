@@ -180,7 +180,8 @@ export default function TaskModal({ tarea, proyectoId, miembros, puedeEditar, on
   };
 
   return (
-    <Modal titulo={esNueva ? 'Nueva tarea' : 'Detalle de tarea'} onClose={onClose}>
+    <Modal titulo={esNueva ? 'Nueva tarea' : 'Detalle de tarea'} onClose={onClose} ancho={esNueva ? undefined : 'amplio'}>
+      <div className="modal-cols">
       <form onSubmit={handleSubmit}>
         {error && <div className="form-error">{error}</div>}
 
@@ -289,8 +290,8 @@ export default function TaskModal({ tarea, proyectoId, miembros, puedeEditar, on
       </form>
 
       {!esNueva && !cargandoDetalle && (
-        <>
-          <hr style={{ border: 'none', borderTop: '1px solid var(--color-border)', margin: '22px 0' }} />
+        <div>
+          <hr className="modal-cols__sep" />
 
           <EtiquetasSection proyectoId={proyectoId} tareaId={tarea.id} seleccionadas={etiquetas} onCambio={(e) => { setEtiquetas(e); refrescarActividad(); }} puedeEditar={puedeEditar} onError={setError} />
           <ChecklistSection tareaId={tarea.id} items={checklist} onCambio={(c) => { setChecklist(c); refrescarActividad(); }} puedeEditar={puedeEditar} onError={setError} />
@@ -368,8 +369,9 @@ export default function TaskModal({ tarea, proyectoId, miembros, puedeEditar, on
 
           <hr style={{ border: 'none', borderTop: '1px solid var(--color-border)', margin: '22px 0' }} />
           <ActividadLista key={versionActividad} proyectoId={proyectoId} tareaId={tarea.id} titulo="Actividad de la tarea" />
-        </>
+        </div>
       )}
+      </div>
     </Modal>
   );
 }
