@@ -5,6 +5,10 @@ import { tareaService } from '../services/tareaService';
 import { comentarioService } from '../services/comentarioService';
 import { adjuntoService } from '../services/adjuntoService';
 import { useAuth } from '../hooks/useAuth';
+import ChecklistSection from './ChecklistSection';
+import EtiquetasSection from './EtiquetasSection';
+import ComentarioInput from './ComentarioInput';
+import ActividadLista from './ActividadLista';
 
 const ESTADOS = [
   { value: 'ToDo', label: 'Por hacer' },
@@ -42,6 +46,10 @@ export default function TaskModal({ tarea, proyectoId, miembros, puedeEditar, on
   // (viene del listado del tablero), así que se pide el detalle completo al abrir.
   const [comentarios, setComentarios] = useState([]);
   const [adjuntos, setAdjuntos] = useState([]);
+  const [checklist, setChecklist] = useState([]);
+  const [versionActividad, setVersionActividad] = useState(0); // cambia al modificar algo: recarga la bitácora
+  const refrescarActividad = () => setVersionActividad((v) => v + 1);
+  const [etiquetas, setEtiquetas] = useState([]);
   const [cargandoDetalle, setCargandoDetalle] = useState(!esNueva);
   const [nuevoComentario, setNuevoComentario] = useState('');
   const [enviandoComentario, setEnviandoComentario] = useState(false);
@@ -54,6 +62,8 @@ export default function TaskModal({ tarea, proyectoId, miembros, puedeEditar, on
       if (cancelado) return;
       setComentarios(detalle.comentarios || []);
       setAdjuntos(detalle.adjuntos || []);
+      setChecklist(detalle.checklist || []);
+      setEtiquetas(detalle.etiquetas || []);
       setCargandoDetalle(false);
     }).catch(() => setCargandoDetalle(false));
     return () => { cancelado = true; };
@@ -112,6 +122,7 @@ export default function TaskModal({ tarea, proyectoId, miembros, puedeEditar, on
       const comentario = await comentarioService.agregar(tarea.id, nuevoComentario.trim());
       setComentarios((prev) => [...prev, comentario]);
       setNuevoComentario('');
+      refrescarActividad();
     } catch {
       setError('No se pudo agregar el comentario.');
     } finally {
@@ -149,6 +160,7 @@ export default function TaskModal({ tarea, proyectoId, miembros, puedeEditar, on
     try {
       const adjunto = await adjuntoService.subir(tarea.id, archivo);
       setAdjuntos((prev) => [adjunto, ...prev]);
+      refrescarActividad();
     } catch (err) {
       setError(err?.response?.data?.title || 'No se pudo subir el archivo.');
     } finally {
@@ -280,6 +292,9 @@ export default function TaskModal({ tarea, proyectoId, miembros, puedeEditar, on
         <>
           <hr style={{ border: 'none', borderTop: '1px solid var(--color-border)', margin: '22px 0' }} />
 
+          <EtiquetasSection proyectoId={proyectoId} tareaId={tarea.id} seleccionadas={etiquetas} onCambio={(e) => { setEtiquetas(e); refrescarActividad(); }} puedeEditar={puedeEditar} onError={setError} />
+          <ChecklistSection tareaId={tarea.id} items={checklist} onCambio={(c) => { setChecklist(c); refrescarActividad(); }} puedeEditar={puedeEditar} onError={setError} />
+
           <section style={{ marginBottom: 22 }}>
             <h3 style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-dim)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
               <Paperclip size={14} /> Adjuntos ({adjuntos.length})
@@ -338,11 +353,11 @@ export default function TaskModal({ tarea, proyectoId, miembros, puedeEditar, on
             </div>
 
             <form onSubmit={handleAgregarComentario} style={{ display: 'flex', gap: 8 }}>
-              <input
-                className="form-input"
-                placeholder="Escribe un comentario…"
+              <ComentarioInput
+                placeholder="Escribe un comentario… (@ para mencionar)"
                 value={nuevoComentario}
-                onChange={(e) => setNuevoComentario(e.target.value)}
+                onChange={setNuevoComentario}
+                miembros={miembros}
                 maxLength={2000}
               />
               <button type="submit" className="btn btn--primary" disabled={enviandoComentario || !nuevoComentario.trim()}>
@@ -350,6 +365,9 @@ export default function TaskModal({ tarea, proyectoId, miembros, puedeEditar, on
               </button>
             </form>
           </section>
+
+          <hr style={{ border: 'none', borderTop: '1px solid var(--color-border)', margin: '22px 0' }} />
+          <ActividadLista key={versionActividad} proyectoId={proyectoId} tareaId={tarea.id} titulo="Actividad de la tarea" />
         </>
       )}
     </Modal>

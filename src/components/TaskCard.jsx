@@ -1,4 +1,4 @@
-import { Flag, MessageSquare, Paperclip, Calendar } from 'lucide-react';
+import { Flag, MessageSquare, Paperclip, Calendar, ListChecks } from 'lucide-react';
 import './TaskCard.css';
 
 const PRIORIDAD_LABEL = { Baja: 'Baja', Media: 'Media', Alta: 'Alta' };
@@ -34,8 +34,23 @@ export default function TaskCard({ tarea, onClick, onDragStart, arrastrable }) {
           )}
         </span>
       </div>
+      {tarea.etiquetas?.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 8 }}>
+          {tarea.etiquetas.map((e) => (
+            <span key={e.id} style={{ fontSize: 10, padding: '1px 7px', borderRadius: 999, background: e.color, color: '#fff' }}>{e.nombre}</span>
+          ))}
+        </div>
+      )}
       <p className="task-card__titulo" style={{ margin: '8px 0' }}>{tarea.titulo}</p>
       {tarea.descripcion && <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '0 0 8px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{tarea.descripcion}</p>}
+      {tarea.totalChecklist > 0 && (
+        <div title="Lista de pasos" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--text-muted)', margin: '0 0 8px' }}>
+          <ListChecks size={12} /> {tarea.checklistHechos}/{tarea.totalChecklist}
+          <span style={{ flex: 1, height: 4, background: 'var(--bg-tertiary)', borderRadius: 999, overflow: 'hidden' }}>
+            <span style={{ display: 'block', height: '100%', width: `${(tarea.checklistHechos / tarea.totalChecklist) * 100}%`, background: 'var(--accent)' }} />
+          </span>
+        </div>
+      )}
       <div className="task-card__bottom" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         {tarea.asignadoANombre ? (
           <span className="task-card__asignado" title={tarea.asignadoANombre} style={{ width: 24, height: 24, borderRadius: '50%', background: 'var(--bg-tertiary)', border: '1px solid var(--border)', display: 'grid', placeItems: 'center', fontSize: 11, fontWeight: 600 }}>

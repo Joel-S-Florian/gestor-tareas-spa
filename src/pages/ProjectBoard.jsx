@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Plus, Search, Filter, ArrowLeft, Pencil, Trash2, Users, Loader2, Eye } from 'lucide-react';
+import { Plus, Search, Filter, ArrowLeft, Pencil, Trash2, Users, Loader2, Eye, History } from 'lucide-react';
 import AppLayout from '../components/layout/AppLayout';
 import KanbanColumn from '../components/KanbanColumn';
 import TaskModal from '../components/TaskModal';
@@ -8,6 +8,9 @@ import MembersModal from '../components/MembersModal';
 import ProyectoModal from '../components/ProyectoModal';
 import { proyectoService } from '../services/proyectoService';
 import { tareaService } from '../services/tareaService';
+import { extrasService } from '../services/extrasService';
+import ActividadLista from '../components/ActividadLista';
+import Modal from '../components/Modal';
 
 const COLUMNAS = [
   { estado: 'ToDo', titulo: 'Por hacer', color: '#64748B' },
@@ -30,6 +33,9 @@ export default function ProjectBoard() {
   const [filtroAsignado, setFiltroAsignado] = useState('');
   const [busqueda, setBusqueda] = useState('');
   const [soloVencidas, setSoloVencidas] = useState(false);
+  const [filtroEtiqueta, setFiltroEtiqueta] = useState('');
+  const [etiquetas, setEtiquetas] = useState([]);
+  const [actividadAbierta, setActividadAbierta] = useState(false);
 
   const [tareaSeleccionada, setTareaSeleccionada] = useState(null);
   const [modalNuevaAbierto, setModalNuevaAbierto] = useState(false);
@@ -64,23 +70,25 @@ export default function ProjectBoard() {
     if (filtroPrioridad) filtro.prioridad = filtroPrioridad;
     if (filtroAsignado) filtro.asignadoAId = filtroAsignado;
     if (soloVencidas) filtro.vencidas = true;
+    if (filtroEtiqueta) filtro.etiquetaId = filtroEtiqueta;
     try {
       const resultado = await tareaService.listarPorProyecto(proyectoId, filtro);
       setTareas(resultado.items);
     } catch {
       setError('No se pudieron cargar las tareas.');
     }
-  }, [proyectoId, filtroPrioridad, filtroAsignado, soloVencidas]);
+  }, [proyectoId, filtroPrioridad, filtroAsignado, soloVencidas, filtroEtiqueta]);
 
   useEffect(() => { cargarTodo(); }, [cargarTodo]);
-  useEffect(() => { if (!cargando) cargarTareas(); }, [filtroPrioridad, filtroAsignado, soloVencidas]);
+  useEffect(() => { if (!cargando) cargarTareas(); }, [filtroPrioridad, filtroAsignado, soloVencidas, filtroEtiqueta]);
+  useEffect(() => { extrasService.etiquetas(proyectoId).then(setEtiquetas).catch(() => {}); }, [proyectoId, tareaSeleccionada]);
 
   const handleDragStart = (e, tarea) => {
     e.dataTransfer.setData('text/tarea-id', String(tarea.id));
   };
 
   // Con filtros o búsqueda activos la posición visible no equivale a la real: se manda al final.
-  const hayFiltros = Boolean(filtroPrioridad || filtroAsignado || busqueda.trim() || soloVencidas);
+  const hayFiltros = Boolean(filtroPrioridad || filtroAsignado || busqueda.trim() || soloVencidas || filtroEtiqueta);
 
   const handleDrop = async (tareaId, nuevoEstado, posicionVisible = 0) => {
     const tarea = tareas.find((t) => t.id === tareaId);
@@ -208,6 +216,15 @@ export default function ProjectBoard() {
             <option key={m.usuarioId} value={m.usuarioId}>{m.nombre}</option>
           ))}
         </select>
+        {etiquetas.length > 0 && (
+          <select aria-label="Filtrar por etiqueta" value={filtroEtiqueta} onChange={(e) => setFiltroEtiqueta(e.target.value)} style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-primary)', color: 'var(--text-primary)', fontSize: 13 }}>
+            <option value="">Todas las etiquetas</option>
+            {etiquetas.map((e) => <option key={e.id} value={e.id}>{e.nombre}</option>)}
+          </select>
+        )}
+        <button onClick={() => setActividadAbierta(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 8, background: 'var(--bg-tertiary)', border: '1px solid var(--border)', color: 'var(--text-primary)', fontSize: 13, cursor: 'pointer' }}>
+          <History size={14} /> Actividad
+        </button>
         <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--text-secondary)', cursor: 'pointer' }}>
           <input type="checkbox" checked={soloVencidas} onChange={(e) => setSoloVencidas(e.target.checked)} /> Solo vencidas
         </label>
@@ -232,10 +249,15 @@ export default function ProjectBoard() {
       </div>
 
       {tareaSeleccionada && (
-        <TaskModal tarea={tareaSeleccionada} proyectoId={proyectoId} miembros={miembros} puedeEditar={puedeEditar} onClose={() => setTareaSeleccionada(null)} onGuardado={handleTareaGuardada} onEliminado={handleTareaEliminada} />
+        <TaskModal tarea={tareaSeleccionada} proyectoId={proyectoId} miembros={miembros} puedeEditar={puedeEditar} onClose={() => { setTareaSeleccionada(null); cargarTareas(); }} onGuardado={handleTareaGuardada} onEliminado={handleTareaEliminada} />
       )}
       {modalNuevaAbierto && (
         <TaskModal tarea={null} proyectoId={proyectoId} miembros={miembros} puedeEditar={true} onClose={() => setModalNuevaAbierto(false)} onGuardado={handleTareaGuardada} onEliminado={() => {}} />
+      )}
+      {actividadAbierta && (
+        <Modal titulo="Actividad del proyecto" onClose={() => setActividadAbierta(false)}>
+          <ActividadLista proyectoId={proyectoId} titulo="Últimos movimientos" />
+        </Modal>
       )}
       {modalMiembrosAbierto && (
         <MembersModal proyecto={proyecto} miembros={miembros} esOwner={proyecto.miRol === 'Owner'} onClose={() => setModalMiembrosAbierto(false)} onCambio={setMiembros} />

@@ -15,7 +15,7 @@ Requiere Node.js 24 (con el que se probó; en Node 20 antiguo falla jsdom) y la 
 ```bash
 npm install
 npm run dev      # http://localhost:5173
-npm test         # 11 pruebas
+npm test         # 16 pruebas
 npm run build
 ```
 
@@ -48,15 +48,17 @@ Vite redirige `/api` a la API (`vite.config.js`), así el SPA y la API comparten
 - Arrastrar una tarjeta la mueve de columna y, dentro de la columna, a la posición donde se suelta (`PATCH /tareas/{id}/mover`). El cambio se ve al instante y se revierte si la API lo rechaza.
 - Con filtros o búsqueda activos, la tarjeta se mueve al final de la columna de destino, porque la posición visible no equivale a la real.
 - El Viewer no ve el botón de agregar ni puede arrastrar; el modal de tarea queda en solo lectura.
-- La campana del encabezado muestra los avisos de asignación y se actualiza cada minuto.
+- La campana del encabezado muestra los avisos (asignaciones y menciones) y se actualiza cada minuto.
+- En cada tarea: **etiquetas** de color (se crean al vuelo), **lista de pasos** con barra de progreso, comentarios con **menciones** (`@` abre un autocompletado de miembros) y su **actividad**. El tablero se filtra por etiqueta y el botón "Actividad" abre la bitácora del proyecto.
 
 ## Pruebas
 
-`npm test` ejecuta 11 pruebas con Vitest:
+`npm test` ejecuta 16 pruebas con Vitest:
 
 - Interceptor de sesión: renueva y reintenta, un solo refresh con peticiones simultáneas, sesión limpia si falla, no reintenta en `/auth/login`, nada en `localStorage`.
 - `ProtectedRoute`: redirige sin sesión, espera mientras se restaura, muestra el contenido con sesión.
 - Permisos del tablero (Viewer frente a Editor/Owner) y cálculo de la posición al soltar una tarjeta.
+- Acceso rápido de desarrollo, detección y autocompletado de menciones (`@`) y lista de pasos (progreso, marcar, solo lectura).
 
 La integración continua (`.github/workflows/ci.yml`) ejecuta las pruebas y la compilación.
 
