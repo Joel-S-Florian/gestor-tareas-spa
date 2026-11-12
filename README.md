@@ -1,79 +1,79 @@
-# Gestor de Tareas — SPA (frontend)
+# Gestor de Tareas — SPA
 
-Cliente web (SPA React) de la aplicación **Gestor de Proyectos y Tareas** (Capstone). Consume la API REST del
-backend (`gestor-tareas-api`) con autenticación JWT + refresh tokens automático.
+Cliente web (React) del gestor de proyectos y tareas: tablero Kanban con arrastrar y soltar, roles por proyecto, comentarios, adjuntos y avisos de asignación. Consume la API de [gestor-tareas-api](https://github.com/Joel-S-Florian/gestor-tareas-api), donde están el backend, los usuarios de demostración y las decisiones de arquitectura.
 
-## Estado actual
-
-- ✅ **Hito 3** — Login, registro, dashboard de proyectos y tablero Kanban con drag & drop.
-- ✅ **Hito 4** — Detalle de tarea con comentarios y adjuntos, gestión de miembros (invitar/remover/cambiar rol),
-  pantalla de perfil (editar nombre/email) y editar/eliminar proyecto.
-- ✅ Página 404, ErrorBoundary global, manejo de carga/errores en todas las llamadas.
-- ⬜ **Hito 5** — Despliegue en Vercel/Netlify (pendiente; requiere URL de API en producción).
+**No está desplegada**: se ejecuta en local.
 
 ## Tecnologías
 
-- React 18 (funcional + Hooks) con Vite
-- React Router v6 (rutas protegidas)
-- Axios con interceptores (inyecta JWT y refresca el access token automáticamente)
-- Context API para autenticación (`AuthContext`) + custom hooks (`useAuth`, `useApi`)
-- CSS con variables de diseño (`styles/tokens.css`) — tema oscuro, responsivo
-- Validación de archivos en cliente: máx. 5 MB, tipos imagen/PDF
+React 18 · Vite 5 · React Router 6 · Axios · Vitest + Testing Library.
+
+## Ejecutarlo en local
+
+Requiere Node.js 20+ y la API corriendo en `https://localhost:52411` (ver el README de la API).
+
+```bash
+npm install
+npm run dev      # http://localhost:5173
+npm test         # 11 pruebas
+npm run build
+```
+
+Vite redirige `/api` a la API (`vite.config.js`), así el SPA y la API comparten origen y la cookie HttpOnly de la sesión viaja sin CORS. El archivo `.env.development` define:
+
+| Variable | Valor | Uso |
+|---|---|---|
+| `VITE_API_URL` | `/api/v1` | Base de las llamadas (relativa, pasa por el proxy) |
+| `VITE_DEMO` | `true` | Muestra el botón "Autocompletar demo" en el login. No existe en una compilación de producción. |
 
 ## Pantallas
 
 | Ruta | Pantalla |
 |---|---|
-| `/login` | Inicio de sesión (con botón "Autocompletar demo") |
-| `/register` | Registro de cuenta |
-| `/` | Dashboard: proyectos del usuario (propios y compartidos) + crear proyecto |
-| `/proyectos/:id` | Tablero Kanban (3 columnas) + filtros + editar/eliminar proyecto + gestión de miembros |
-| `/perfil` | Perfil del usuario (editar nombre/email) |
-| * | 404 |
+| `/login`, `/register` | Inicio de sesión y registro |
+| `/` | Dashboard: mis proyectos (propios y compartidos), resumen y distribución de tareas |
+| `/proyectos/:id` | Tablero Kanban, filtros, búsqueda, "solo vencidas", miembros y edición del proyecto |
+| `/perfil` | Editar nombre y email |
 
-## Funcionalidades
+## Cómo funciona la sesión
 
-- Sesión persistente en `localStorage` (sobrevive recargas).
-- **Renovación automática** del access token vía interceptor (con cola para no duplicar refreshes) y redirección a `/login` si expira.
-- Rutas protegidas con `ProtectedRoute`.
-- Tablero Kanban: 3 columnas (Por hacer / En progreso / Hecho) con **drag & drop** y filtros por prioridad y asignado.
-- CRUD de tareas (crear, editar, eliminar, cambiar estado) respetando roles (Viewer solo lectura).
-- Comentarios y adjuntos en el detalle de tarea (subir/descargar/eliminar).
-- Gestión de miembros: invitar por email, cambiar rol, remover (solo Owner).
-- Confirmación en acciones críticas (eliminar tarea, proyecto, adjunto, remover miembro).
-- Indicadores de carga y mensajes de error en lenguaje natural (nunca se muestra un stack trace).
+- El **access token** vive solo en memoria. El **refresh token** está en una cookie HttpOnly que el JavaScript no puede leer ([ADR 002 de la API](https://github.com/Joel-S-Florian/gestor-tareas-api/blob/main/docs/decisiones/002-sesion-con-cookie-httponly.md)).
+- Al abrir o recargar la página, `AuthProvider` recupera la sesión pidiendo un access token con la cookie. Mientras lo hace, las rutas privadas muestran "Cargando…" en vez de mandar al login.
+- Un interceptor de Axios renueva el token ante un 401 y reintenta la petición. Las peticiones simultáneas comparten **un solo** refresh, porque el refresh token rota en cada uso.
+- Si no se puede renovar, se limpia la sesión y se avisa a la app para volver al login.
+- Versiones anteriores guardaban los tokens en `localStorage`; al arrancar se borran.
 
-## Cómo ejecutarlo localmente
+## Tablero
 
-1. Requiere Node.js 20+ y el backend corriendo (ver README del backend).
-2. Abrir una terminal en `Frontend/gestor-tareas-spa`:
-   ```
-   npm install
-   npm run dev
-   ```
-3. Abrir `http://localhost:5173` e iniciar sesión con un usuario semilla:
-   - `joel@demo.com` / `Demo1234!`
-   - `ana@demo.com` / `Demo1234!`
+- Arrastrar una tarjeta la mueve de columna y, dentro de la columna, a la posición donde se suelta (`PATCH /tareas/{id}/mover`). El cambio se ve al instante y se revierte si la API lo rechaza.
+- Con filtros o búsqueda activos, la tarjeta se mueve al final de la columna de destino, porque la posición visible no equivale a la real.
+- El Viewer no ve el botón de agregar ni puede arrastrar; el modal de tarea queda en solo lectura.
+- La campana del encabezado muestra los avisos de asignación y se actualiza cada minuto.
 
-### Variables de entorno
+## Pruebas
 
-| Archivo | Variable | Uso |
-|---|---|---|
-| `.env.development` | `VITE_API_URL` | URL local de la API (default `https://localhost:52411/api/v1`) |
-| `.env.production` | `VITE_API_URL` | URL de la API desplegada (se configura como variable de entorno en el proveedor) |
+`npm test` ejecuta 11 pruebas con Vitest:
 
-> **Nota HTTPS local:** la API corre con un certificado de desarrollo de .NET. Si el navegador bloquea las llamadas,
-> ejecuta `dotnet dev-certs https --trust` (una vez) o abre `https://localhost:52411/health` y acepta la advertencia.
+- Interceptor de sesión: renueva y reintenta, un solo refresh con peticiones simultáneas, sesión limpia si falla, no reintenta en `/auth/login`, nada en `localStorage`.
+- `ProtectedRoute`: redirige sin sesión, espera mientras se restaura, muestra el contenido con sesión.
+- Permisos del tablero (Viewer frente a Editor/Owner) y cálculo de la posición al soltar una tarjeta.
+
+La integración continua (`.github/workflows/ci.yml`) ejecuta las pruebas y la compilación.
 
 ## Estructura
 
 ```
 src/
-  components/   Navbar, ProjectCard, ProyectoModal, TaskCard, KanbanColumn, TaskModal, MembersModal, Modal, ProtectedRoute, ErrorBoundary
+  components/   Kanban, tarjetas, modales, ProtectedRoute, ErrorBoundary, layout (barra lateral, encabezado, avisos)
   pages/        Login, Register, Dashboard, ProjectBoard, Perfil, NotFound
-  context/      AuthContext (autenticación global)
-  hooks/        useAuth, useApi
-  services/     api.js (Axios + interceptores), auth, proyecto, tarea, comentario, adjunto, user
-  utils/        mensajeDeError (mensajes amigables de errores HTTP)
-  styles/       tokens.css (variables de diseño)
+  context/      AuthContext (sesión), ThemeContext (claro/oscuro)
+  services/     api.js (Axios, interceptor, sesión en memoria) y un servicio por recurso
+  styles/       tokens.css (variables de diseño), responsive.css (reglas móviles)
 ```
+
+## Límites conocidos
+
+- Muchos estilos están en línea (`style={{…}}`) en vez de en hojas de estilo; las reglas móviles los anulan con `!important`.
+- Sin prueba de extremo a extremo con navegador; el flujo completo se comprobó a mano.
+- El diseño móvil se comprobó solo midiendo que no hay desbordamiento horizontal a 375 px, no con una revisión visual completa; el modo oscuro tampoco se revisó a fondo.
+- La posición al soltar se calcula con el puntero; en pantallas táctiles el arrastre nativo de HTML5 no funciona, y queda el selector de estado del modal.
