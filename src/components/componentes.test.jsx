@@ -77,3 +77,14 @@ describe('reordenar con arrastrar y soltar', () => {
     expect(recibido).toEqual([3, 'ToDo', 1]);
   });
 });
+
+describe('acceso rápido de desarrollo', () => {
+  it('ofrece las 4 cuentas y entrega la elegida', async () => {
+    const { default: AccesoRapido } = await import('../dev/AccesoRapido');
+    let elegida;
+    render(<AccesoRapido onElegir={(c) => { elegida = c; }} />);
+    expect(screen.getAllByRole('button')).toHaveLength(4);
+    fireEvent.click(screen.getByLabelText('Entrar como Luis Vega'));
+    expect(elegida.email).toBe('luis@demo.com');
+  });
+});

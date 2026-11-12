@@ -24,7 +24,7 @@ Vite redirige `/api` a la API (`vite.config.js`), así el SPA y la API comparten
 | Variable | Valor | Uso |
 |---|---|---|
 | `VITE_API_URL` | `/api/v1` | Base de las llamadas (relativa, pasa por el proxy) |
-| `VITE_DEMO` | `true` | Muestra el botón "Autocompletar demo" en el login. No existe en una compilación de producción. |
+| `VITE_DEMO` | `true` | Muestra en el login un **acceso rápido con 4 cuentas de distinto rol** y, dentro de la app, un selector "Cambiar de cuenta" (código en `src/dev`). Sin esta variable ese código no entra en la compilación (comprobado: las contraseñas demo no aparecen en `dist`). |
 
 ## Pantallas
 

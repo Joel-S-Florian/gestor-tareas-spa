@@ -1,8 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { LogIn, Loader2 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import './Auth.css';
+
+// Solo existe con VITE_DEMO=true: sin esa variable el bloque entero se elimina de la compilación.
+const AccesoRapido = import.meta.env.VITE_DEMO === 'true' ? lazy(() => import('../dev/AccesoRapido')) : null;
 
 function TabTaskLogo({ size = 36 }) {
   return (
@@ -28,12 +31,16 @@ export default function Login() {
 
   useEffect(() => { document.title = 'Gestor de Tareas \u00B7 Iniciar sesion'; }, []);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const entrar = async (correo, clave) => {
     try {
-      await login(email, password);
+      await login(correo, clave);
       navigate(destino, { replace: true });
     } catch { /* error via context */ }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    entrar(email, password);
   };
 
   return (
@@ -58,10 +65,10 @@ export default function Login() {
           <input id="password" className="auth__input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required autoComplete="current-password" style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-primary)', color: 'var(--text-primary)', fontSize: 14 }} />
         </div>
 
-        {import.meta.env.VITE_DEMO === 'true' && (
-          <button type="button" onClick={() => { setEmail('demo@demo.com'); setPassword('demo123'); }} style={{ marginBottom: 14, fontSize: 12, background: 'transparent', border: 'none', color: 'var(--accent)', cursor: 'pointer', textDecoration: 'underline' }}>
-            Autocompletar demo
-          </button>
+        {AccesoRapido && (
+          <Suspense fallback={null}>
+            <AccesoRapido deshabilitado={cargando} onElegir={(c) => entrar(c.email, c.password)} />
+          </Suspense>
         )}
 
         <button className="auth__submit" type="submit" disabled={cargando} style={{ width: '100%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '10px 14px', borderRadius: 8, background: 'var(--accent)', color: '#fff', border: 'none', fontSize: 14, fontWeight: 600, cursor: 'pointer', opacity: cargando ? 0.7 : 1 }}>

@@ -1,6 +1,10 @@
+import { lazy, Suspense } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, FolderKanban, User, LogOut } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
+
+// Solo existe con VITE_DEMO=true (ver src/dev).
+const CambiarCuenta = import.meta.env.VITE_DEMO === 'true' ? lazy(() => import('../../dev/CambiarCuenta')) : null;
 
 function Logo() {
   return (
@@ -78,6 +82,10 @@ export default function Sidebar() {
           <FolderKanban size={16} /> Proyectos en Dashboard
         </div>
       </nav>
+
+      {usuario && CambiarCuenta && (
+        <Suspense fallback={null}><CambiarCuenta /></Suspense>
+      )}
 
       {usuario && (
         <div
