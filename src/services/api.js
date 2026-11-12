@@ -1,87 +1,68 @@
 import axios from 'axios';
 
 // Usar variable de entorno (compatible con Vite)
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:52411/api/v1';
+export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:52411/api/v1';
 
+// withCredentials: el navegador envía la cookie HttpOnly del refresh token (solo a /auth/*).
 const api = axios.create({
   baseURL: API_URL,
   timeout: 20000,
-  headers: {
-    'Content-Type': 'application/json',
-  }
+  withCredentials: true,
+  headers: { 'Content-Type': 'application/json' }
 });
 
-// --- Almacenamiento de tokens (MISMO esquema que AuthContext) ---
-const TOKEN_KEY = 'gt_access_token';
-const REFRESH_KEY = 'gt_refresh_token';
-
-export const tokenStorage = {
-  getAccessToken: () => localStorage.getItem(TOKEN_KEY),
-  getRefreshToken: () => localStorage.getItem(REFRESH_KEY),
-  setTokens: (accessToken, refreshToken) => {
-    localStorage.setItem(TOKEN_KEY, accessToken);
-    localStorage.setItem(REFRESH_KEY, refreshToken);
-  },
-  clear: () => {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(REFRESH_KEY);
-    localStorage.removeItem('gt_usuario');
-  }
+// El access token vive solo en memoria: no hay nada que robar de localStorage.
+// Al recargar la página se recupera pidiendo un access token nuevo con la cookie.
+let accessToken = null;
+export const sesion = {
+  getAccessToken: () => accessToken,
+  setAccessToken: (t) => { accessToken = t; },
+  clear: () => { accessToken = null; }
 };
 
-// --- Interceptor de request: inyecta JWT ---
-api.interceptors.request.use((config) => {
-  const token = tokenStorage.getAccessToken();
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-}, (error) => Promise.reject(error));
+export const EVENTO_SESION_EXPIRADA = 'gt:sesion-expirada';
 
-// --- Interceptor de response: refresh automático con cola de promesas ---
-let refreshingPromise = null;
+// Pide un access token nuevo. Las llamadas simultáneas comparten una sola petición:
+// el refresh token rota en cada uso, y repetirlo lo invalidaría.
+let refrescando = null;
+export function renovarSesion() {
+  if (!refrescando) {
+    refrescando = axios
+      .post(`${API_URL}/auth/refresh`, null, { withCredentials: true })
+      .then((res) => {
+        sesion.setAccessToken(res.data.accessToken);
+        return res.data;
+      })
+      .finally(() => { refrescando = null; });
+  }
+  return refrescando;
+}
+
+api.interceptors.request.use((config) => {
+  if (accessToken) config.headers.Authorization = `Bearer ${accessToken}`;
+  return config;
+});
 
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const originalRequest = error.config;
-    const status = error.response?.status;
+    const original = error.config;
+    const esRutaAuth = original?.url?.includes('/auth/');
 
-    // Evitar bucles en rutas de autenticación
-    const esRutaAuth = originalRequest?.url?.includes('/auth/login') ||
-      originalRequest?.url?.includes('/auth/register');
-
-    if (status === 401 && !originalRequest._retry && !esRutaAuth) {
-      originalRequest._retry = true;
-
+    if (error.response?.status === 401 && original && !original._retry && !esRutaAuth) {
+      original._retry = true;
       try {
-        if (!refreshingPromise) {
-          const refreshToken = tokenStorage.getRefreshToken();
-          if (!refreshToken) throw new Error('Sin refresh token disponible');
-
-          refreshingPromise = axios
-            .post(`${API_URL}/auth/refresh`, { refreshToken })
-            .then((res) => {
-              const { accessToken, refreshToken: nuevoRefresh } = res.data;
-              tokenStorage.setTokens(accessToken, nuevoRefresh);
-              return accessToken;
-            })
-            .finally(() => {
-              refreshingPromise = null;
-            });
-        }
-
-        const nuevoAccessToken = await refreshingPromise;
-        originalRequest.headers.Authorization = `Bearer ${nuevoAccessToken}`;
-        return api(originalRequest);
+        const { accessToken: nuevo } = await renovarSesion();
+        original.headers.Authorization = `Bearer ${nuevo}`;
+        return api(original);
       } catch (refreshError) {
-        tokenStorage.clear();
-        window.location.href = '/login';
+        sesion.clear();
+        window.dispatchEvent(new Event(EVENTO_SESION_EXPIRADA));
         return Promise.reject(refreshError);
       }
     }
 
-    // SIEMPRE rechazar errores para que los componentes puedan manejarlos
+    // Siempre rechazar para que los componentes puedan manejar el error.
     return Promise.reject(error);
   }
 );

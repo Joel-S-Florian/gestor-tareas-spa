@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Plus, Search, Filter, ArrowLeft, Pencil, Trash2, Users, Loader2, Eye } from 'lucide-react';
+import { Plus, Search, Filter, ArrowLeft, Pencil, Trash2, Users, Eye, History } from 'lucide-react';
 import AppLayout from '../components/layout/AppLayout';
 import KanbanColumn from '../components/KanbanColumn';
 import TaskModal from '../components/TaskModal';
@@ -8,6 +8,12 @@ import MembersModal from '../components/MembersModal';
 import ProyectoModal from '../components/ProyectoModal';
 import { proyectoService } from '../services/proyectoService';
 import { tareaService } from '../services/tareaService';
+import { extrasService } from '../services/extrasService';
+import { useToast } from '../context/ToastContext';
+import { reproducir } from '../services/sonido';
+import { SkeletonTablero } from '../components/Skeletons';
+import ActividadLista from '../components/ActividadLista';
+import Modal from '../components/Modal';
 
 const COLUMNAS = [
   { estado: 'ToDo', titulo: 'Por hacer', color: '#64748B' },
@@ -29,6 +35,12 @@ export default function ProjectBoard() {
   const [filtroPrioridad, setFiltroPrioridad] = useState('');
   const [filtroAsignado, setFiltroAsignado] = useState('');
   const [busqueda, setBusqueda] = useState('');
+  const [soloVencidas, setSoloVencidas] = useState(false);
+  const [filtroEtiqueta, setFiltroEtiqueta] = useState('');
+  const [etiquetas, setEtiquetas] = useState([]);
+  const [actividadAbierta, setActividadAbierta] = useState(false);
+  const [recienMovida, setRecienMovida] = useState(null);
+  const toast = useToast();
 
   const [tareaSeleccionada, setTareaSeleccionada] = useState(null);
   const [modalNuevaAbierto, setModalNuevaAbierto] = useState(false);
@@ -38,7 +50,7 @@ export default function ProjectBoard() {
 
   const puedeEditar = proyecto?.miRol === 'Owner' || proyecto?.miRol === 'Editor';
 
-  useEffect(() => { document.title = proyecto ? `TabTask \u00B7 ${proyecto.nombre}` : 'TabTask \u00B7 Proyecto'; }, [proyecto]);
+  useEffect(() => { document.title = proyecto ? `Gestor de Tareas \u00B7 ${proyecto.nombre}` : 'Gestor de Tareas \u00B7 Proyecto'; }, [proyecto]);
 
   const cargarTodo = useCallback(async () => {
     setCargando(true);
@@ -62,29 +74,51 @@ export default function ProjectBoard() {
     const filtro = { page: 1, pageSize: 100 };
     if (filtroPrioridad) filtro.prioridad = filtroPrioridad;
     if (filtroAsignado) filtro.asignadoAId = filtroAsignado;
+    if (soloVencidas) filtro.vencidas = true;
+    if (filtroEtiqueta) filtro.etiquetaId = filtroEtiqueta;
     try {
       const resultado = await tareaService.listarPorProyecto(proyectoId, filtro);
       setTareas(resultado.items);
     } catch {
       setError('No se pudieron cargar las tareas.');
     }
-  }, [proyectoId, filtroPrioridad, filtroAsignado]);
+  }, [proyectoId, filtroPrioridad, filtroAsignado, soloVencidas, filtroEtiqueta]);
 
   useEffect(() => { cargarTodo(); }, [cargarTodo]);
-  useEffect(() => { if (!cargando) cargarTareas(); }, [filtroPrioridad, filtroAsignado]);
+  useEffect(() => { if (!cargando) cargarTareas(); }, [filtroPrioridad, filtroAsignado, soloVencidas, filtroEtiqueta]);
+  useEffect(() => { extrasService.etiquetas(proyectoId).then(setEtiquetas).catch(() => {}); }, [proyectoId, tareaSeleccionada]);
 
   const handleDragStart = (e, tarea) => {
     e.dataTransfer.setData('text/tarea-id', String(tarea.id));
   };
 
-  const handleDrop = async (tareaId, nuevoEstado) => {
+  // Con filtros o búsqueda activos la posición visible no equivale a la real: se manda al final.
+  const hayFiltros = Boolean(filtroPrioridad || filtroAsignado || busqueda.trim() || soloVencidas || filtroEtiqueta);
+
+  const handleDrop = async (tareaId, nuevoEstado, posicionVisible = 0) => {
     const tarea = tareas.find((t) => t.id === tareaId);
-    if (!tarea || tarea.estado === nuevoEstado) return;
-    setTareas((prev) => prev.map((t) => (t.id === tareaId ? { ...t, estado: nuevoEstado } : t)));
+    if (!tarea || !puedeEditar) return;
+    const posicion = hayFiltros ? 10000 : posicionVisible;
+
+    const anteriores = tareas;
+    const resto = tareas.filter((t) => t.id !== tareaId);
+    const destino = resto.filter((t) => t.estado === nuevoEstado);
+    destino.splice(Math.min(posicion, destino.length), 0, { ...tarea, estado: nuevoEstado });
+    setTareas([...resto.filter((t) => t.estado !== nuevoEstado), ...destino]);
+
     try {
-      await tareaService.cambiarEstado(tareaId, nuevoEstado);
+      await tareaService.mover(tareaId, nuevoEstado, posicion);
+      setRecienMovida(tareaId);
+      setTimeout(() => setRecienMovida(null), 800);
+      if (nuevoEstado === 'Done' && tarea.estado !== 'Done') {
+        reproducir('hecho');
+        toast.exito('¡Tarea completada!');
+      } else {
+        reproducir('mover');
+      }
     } catch {
-      setTareas((prev) => prev.map((t) => (t.id === tareaId ? { ...t, estado: tarea.estado } : t)));
+      setTareas(anteriores);
+      toast.error('No se pudo mover la tarea. Se devolvió a su lugar.');
     }
   };
 
@@ -95,16 +129,19 @@ export default function ProjectBoard() {
     });
     setTareaSeleccionada(null);
     setModalNuevaAbierto(false);
+    toast.exito('Tarea guardada');
   };
 
   const handleTareaEliminada = (tareaId) => {
     setTareas((prev) => prev.filter((t) => t.id !== tareaId));
     setTareaSeleccionada(null);
+    toast.exito('Tarea eliminada');
   };
 
   const handleProyectoGuardado = (actualizado) => {
     setProyecto(actualizado);
     setModalEditarAbierto(false);
+    toast.exito('Proyecto actualizado');
   };
 
   const handleEliminarProyecto = async () => {
@@ -128,7 +165,7 @@ export default function ProjectBoard() {
   if (cargando) {
     return (
       <AppLayout>
-        <p style={{ display: 'inline-flex', alignItems: 'center', gap: 8, color: 'var(--text-secondary)', fontSize: 14 }}><Loader2 size={16} /> Cargando tablero...</p>
+        <SkeletonTablero />
       </AppLayout>
     );
   }
@@ -196,10 +233,22 @@ export default function ProjectBoard() {
             <option key={m.usuarioId} value={m.usuarioId}>{m.nombre}</option>
           ))}
         </select>
+        {etiquetas.length > 0 && (
+          <select aria-label="Filtrar por etiqueta" value={filtroEtiqueta} onChange={(e) => setFiltroEtiqueta(e.target.value)} style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-primary)', color: 'var(--text-primary)', fontSize: 13 }}>
+            <option value="">Todas las etiquetas</option>
+            {etiquetas.map((e) => <option key={e.id} value={e.id}>{e.nombre}</option>)}
+          </select>
+        )}
+        <button onClick={() => setActividadAbierta(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 8, background: 'var(--bg-tertiary)', border: '1px solid var(--border)', color: 'var(--text-primary)', fontSize: 13, cursor: 'pointer' }}>
+          <History size={14} /> Actividad
+        </button>
+        <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--text-secondary)', cursor: 'pointer' }}>
+          <input type="checkbox" checked={soloVencidas} onChange={(e) => setSoloVencidas(e.target.checked)} /> Solo vencidas
+        </label>
         {!puedeEditar && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--text-muted)' }}><Eye size={12} /> Solo lectura ({proyecto.miRol})</span>}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, alignItems: 'start' }}>
+      <div className="board-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, alignItems: 'start' }}>
         {COLUMNAS.map((col) => (
           <KanbanColumn
             key={col.estado}
@@ -212,15 +261,21 @@ export default function ProjectBoard() {
             onDragStart={handleDragStart}
             puedeEditar={puedeEditar}
             onAddTask={() => setModalNuevaAbierto(true)}
+            recienMovida={recienMovida}
           />
         ))}
       </div>
 
       {tareaSeleccionada && (
-        <TaskModal tarea={tareaSeleccionada} proyectoId={proyectoId} miembros={miembros} puedeEditar={puedeEditar} onClose={() => setTareaSeleccionada(null)} onGuardado={handleTareaGuardada} onEliminado={handleTareaEliminada} />
+        <TaskModal tarea={tareaSeleccionada} proyectoId={proyectoId} miembros={miembros} puedeEditar={puedeEditar} onClose={() => { setTareaSeleccionada(null); cargarTareas(); }} onGuardado={handleTareaGuardada} onEliminado={handleTareaEliminada} />
       )}
       {modalNuevaAbierto && (
         <TaskModal tarea={null} proyectoId={proyectoId} miembros={miembros} puedeEditar={true} onClose={() => setModalNuevaAbierto(false)} onGuardado={handleTareaGuardada} onEliminado={() => {}} />
+      )}
+      {actividadAbierta && (
+        <Modal titulo="Actividad del proyecto" onClose={() => setActividadAbierta(false)}>
+          <ActividadLista proyectoId={proyectoId} titulo="Últimos movimientos" />
+        </Modal>
       )}
       {modalMiembrosAbierto && (
         <MembersModal proyecto={proyecto} miembros={miembros} esOwner={proyecto.miRol === 'Owner'} onClose={() => setModalMiembrosAbierto(false)} onCambio={setMiembros} />

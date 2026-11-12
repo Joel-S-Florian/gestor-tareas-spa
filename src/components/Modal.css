@@ -19,6 +19,15 @@
   box-shadow: var(--shadow-card);
 }
 
+/* Variante ancha (detalle de tarea): en pantallas grandes deja el formulario a la izquierda y el resto a la derecha. */
+.modal--amplio { max-width: 1040px; }
+.modal-cols { display: block; }
+.modal-cols__sep { border: none; border-top: 1px solid var(--color-border); margin: 22px 0; }
+@media (min-width: 900px) {
+  .modal-cols { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 28px; align-items: start; }
+  .modal-cols__sep { display: none; }
+}
+
 .modal__header {
   display: flex;
   align-items: center;

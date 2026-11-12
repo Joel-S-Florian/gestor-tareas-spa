@@ -1,8 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { LogIn, Loader2 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import './Auth.css';
+
+// Solo existe con VITE_DEMO=true: sin esa variable el bloque entero se elimina de la compilación.
+const AccesoRapido = import.meta.env.VITE_DEMO === 'true' ? lazy(() => import('../dev/AccesoRapido')) : null;
 
 function TabTaskLogo({ size = 36 }) {
   return (
@@ -26,14 +29,18 @@ export default function Login() {
   const location = useLocation();
   const destino = location.state?.from?.pathname || '/';
 
-  useEffect(() => { document.title = 'TabTask \u00B7 Iniciar sesion'; }, []);
+  useEffect(() => { document.title = 'Gestor de Tareas \u00B7 Iniciar sesion'; }, []);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const entrar = async (correo, clave) => {
     try {
-      await login(email, password);
+      await login(correo, clave);
       navigate(destino, { replace: true });
     } catch { /* error via context */ }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    entrar(email, password);
   };
 
   return (
@@ -41,7 +48,7 @@ export default function Login() {
       <form className="auth__card" onSubmit={handleSubmit} style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 12, padding: 28, width: '100%', maxWidth: 400, boxShadow: 'var(--shadow-card)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center', marginBottom: 12 }}>
           <TabTaskLogo />
-          <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>TabTask</span>
+          <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>Gestor de Tareas</span>
         </div>
         <h1 className="auth__title" style={{ textAlign: 'center', fontSize: 20, fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 4px' }}>Inicia sesion</h1>
         <p className="auth__subtitle" style={{ textAlign: 'center', fontSize: 13, color: 'var(--text-secondary)', margin: '0 0 20px' }}>Gestion de proyectos y tareas</p>
@@ -58,9 +65,11 @@ export default function Login() {
           <input id="password" className="auth__input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required autoComplete="current-password" style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-primary)', color: 'var(--text-primary)', fontSize: 14 }} />
         </div>
 
-        <button type="button" onClick={() => { setEmail('joel@demo.com'); setPassword('Demo1234!'); }} style={{ marginBottom: 14, fontSize: 12, background: 'transparent', border: 'none', color: 'var(--accent)', cursor: 'pointer', textDecoration: 'underline' }}>
-          Autocompletar demo
-        </button>
+        {AccesoRapido && (
+          <Suspense fallback={null}>
+            <AccesoRapido deshabilitado={cargando} onElegir={(c) => entrar(c.email, c.password)} />
+          </Suspense>
+        )}
 
         <button className="auth__submit" type="submit" disabled={cargando} style={{ width: '100%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '10px 14px', borderRadius: 8, background: 'var(--accent)', color: '#fff', border: 'none', fontSize: 14, fontWeight: 600, cursor: 'pointer', opacity: cargando ? 0.7 : 1 }}>
           {cargando ? <><Loader2 size={16} /> Entrando...</> : <><LogIn size={16} /> Entrar</>}

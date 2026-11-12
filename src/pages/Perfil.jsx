@@ -29,7 +29,7 @@ export default function Perfil() {
   }, [datos]);
 
   useEffect(() => {
-    document.title = 'TabTask \u00B7 Perfil';
+    document.title = 'Gestor de Tareas \u00B7 Perfil';
     proyectoService.listar().then((p) => setNumProyectos(p.length)).catch(() => setNumProyectos(0));
   }, []);
 

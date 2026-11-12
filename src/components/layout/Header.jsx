@@ -1,13 +1,15 @@
 import { useLocation, Link } from 'react-router-dom';
 import { ChevronDown } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
+import SonidoToggle from './SonidoToggle';
+import Avisos from './Avisos';
 import { useAuth } from '../../hooks/useAuth';
 
 function breadcrumbFor(pathname) {
   if (pathname === '/') return [{ label: 'Dashboard' }];
   if (pathname.startsWith('/proyectos/')) return [{ label: 'Dashboard', to: '/' }, { label: 'Proyecto' }];
   if (pathname.startsWith('/perfil')) return [{ label: 'Mi perfil' }];
-  return [{ label: 'TabTask' }];
+  return [{ label: 'Gestor de Tareas' }];
 }
 
 export default function Header() {
@@ -39,7 +41,9 @@ export default function Header() {
       </nav>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <SonidoToggle />
         <ThemeToggle />
+        {usuario && <Avisos />}
         {usuario && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-secondary)' }}>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
