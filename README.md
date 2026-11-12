@@ -10,7 +10,7 @@ React 18 · Vite 5 · React Router 6 · Axios · Vitest + Testing Library.
 
 ## Ejecutarlo en local
 
-Requiere Node.js 20+ y la API corriendo en `https://localhost:52411` (ver el README de la API).
+Requiere Node.js 24 (con el que se probó; en Node 20 antiguo falla jsdom) y la API corriendo en `https://localhost:52411` (ver el README de la API).
 
 ```bash
 npm install
