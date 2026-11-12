@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Plus, Search, Filter, ArrowLeft, Pencil, Trash2, Users, Loader2, Eye, History } from 'lucide-react';
+import { Plus, Search, Filter, ArrowLeft, Pencil, Trash2, Users, Eye, History } from 'lucide-react';
 import AppLayout from '../components/layout/AppLayout';
 import KanbanColumn from '../components/KanbanColumn';
 import TaskModal from '../components/TaskModal';
@@ -9,6 +9,9 @@ import ProyectoModal from '../components/ProyectoModal';
 import { proyectoService } from '../services/proyectoService';
 import { tareaService } from '../services/tareaService';
 import { extrasService } from '../services/extrasService';
+import { useToast } from '../context/ToastContext';
+import { reproducir } from '../services/sonido';
+import { SkeletonTablero } from '../components/Skeletons';
 import ActividadLista from '../components/ActividadLista';
 import Modal from '../components/Modal';
 
@@ -36,6 +39,8 @@ export default function ProjectBoard() {
   const [filtroEtiqueta, setFiltroEtiqueta] = useState('');
   const [etiquetas, setEtiquetas] = useState([]);
   const [actividadAbierta, setActividadAbierta] = useState(false);
+  const [recienMovida, setRecienMovida] = useState(null);
+  const toast = useToast();
 
   const [tareaSeleccionada, setTareaSeleccionada] = useState(null);
   const [modalNuevaAbierto, setModalNuevaAbierto] = useState(false);
@@ -103,8 +108,17 @@ export default function ProjectBoard() {
 
     try {
       await tareaService.mover(tareaId, nuevoEstado, posicion);
+      setRecienMovida(tareaId);
+      setTimeout(() => setRecienMovida(null), 800);
+      if (nuevoEstado === 'Done' && tarea.estado !== 'Done') {
+        reproducir('hecho');
+        toast.exito('¡Tarea completada!');
+      } else {
+        reproducir('mover');
+      }
     } catch {
       setTareas(anteriores);
+      toast.error('No se pudo mover la tarea. Se devolvió a su lugar.');
     }
   };
 
@@ -115,16 +129,19 @@ export default function ProjectBoard() {
     });
     setTareaSeleccionada(null);
     setModalNuevaAbierto(false);
+    toast.exito('Tarea guardada');
   };
 
   const handleTareaEliminada = (tareaId) => {
     setTareas((prev) => prev.filter((t) => t.id !== tareaId));
     setTareaSeleccionada(null);
+    toast.exito('Tarea eliminada');
   };
 
   const handleProyectoGuardado = (actualizado) => {
     setProyecto(actualizado);
     setModalEditarAbierto(false);
+    toast.exito('Proyecto actualizado');
   };
 
   const handleEliminarProyecto = async () => {
@@ -148,7 +165,7 @@ export default function ProjectBoard() {
   if (cargando) {
     return (
       <AppLayout>
-        <p style={{ display: 'inline-flex', alignItems: 'center', gap: 8, color: 'var(--text-secondary)', fontSize: 14 }}><Loader2 size={16} /> Cargando tablero...</p>
+        <SkeletonTablero />
       </AppLayout>
     );
   }
@@ -244,6 +261,7 @@ export default function ProjectBoard() {
             onDragStart={handleDragStart}
             puedeEditar={puedeEditar}
             onAddTask={() => setModalNuevaAbierto(true)}
+            recienMovida={recienMovida}
           />
         ))}
       </div>

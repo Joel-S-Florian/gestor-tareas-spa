@@ -1,5 +1,8 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Plus, FolderKanban, Clock, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react';
+import { Plus, FolderKanban, Clock, CheckCircle2, AlertTriangle } from 'lucide-react';
+import EmptyState from '../components/EmptyState';
+import { SkeletonProyectos } from '../components/Skeletons';
+import { useContador } from '../hooks/useContador';
 import AppLayout from '../components/layout/AppLayout';
 import ProjectCard from '../components/ProjectCard';
 import ProyectoModal from '../components/ProyectoModal';
@@ -109,13 +112,12 @@ export default function Dashboard() {
         </button>
       </div>
 
-      {cargando && <p style={{ display: 'inline-flex', alignItems: 'center', gap: 8, color: 'var(--text-secondary)', fontSize: 14 }}><Loader2 size={16} className="spin" /> Cargando proyectos...</p>}
+      {cargando && <SkeletonProyectos />}
       {error && <p style={{ color: 'var(--danger)', fontSize: 14 }}>{error}</p>}
 
       {!cargando && !error && proyectos.length === 0 && (
-        <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 12, padding: 32, textAlign: 'center' }}>
-          <FolderKanban size={32} style={{ color: 'var(--text-muted)', marginBottom: 8 }} />
-          <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Todavia no tienes proyectos.</p>
+        <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 12, padding: 24 }}>
+          <EmptyState dibujo="proyectos" titulo="Todavía no tienes proyectos" texto="Crea el primero y empieza a organizar tus tareas" />
           <button onClick={() => setModalAbierto(true)} style={{ marginTop: 12, padding: '8px 14px', borderRadius: 8, background: 'var(--accent)', color: '#fff', border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
             <Plus size={16} /> Crea el primero
           </button>
@@ -123,8 +125,8 @@ export default function Dashboard() {
       )}
 
       <div className="dashboard__grid">
-        {proyectos.map((p) => (
-          <ProjectCard key={p.id} proyecto={p} />
+        {proyectos.map((p, i) => (
+          <ProjectCard key={p.id} proyecto={p} indice={i} />
         ))}
       </div>
 
@@ -136,13 +138,14 @@ export default function Dashboard() {
 }
 
 function StatCard({ icon: Icon, label, value, tone }) {
+  const mostrado = useContador(value);
   return (
-    <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 12, padding: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+    <div className="anim-fade-up" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 12, padding: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
       <div style={{ width: 36, height: 36, borderRadius: 8, display: 'grid', placeItems: 'center', background: tone === 'danger' ? '#EF44441A' : 'var(--bg-tertiary)', color: tone === 'danger' ? 'var(--danger)' : 'var(--text-secondary)' }}>
         <Icon size={18} />
       </div>
       <div>
-        <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1 }}>{value}</div>
+        <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1 }}>{mostrado}</div>
         <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{label}</div>
       </div>
     </div>

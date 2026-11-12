@@ -1,6 +1,7 @@
 import { useLocation, Link } from 'react-router-dom';
 import { ChevronDown } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
+import SonidoToggle from './SonidoToggle';
 import Avisos from './Avisos';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -40,6 +41,7 @@ export default function Header() {
       </nav>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <SonidoToggle />
         <ThemeToggle />
         {usuario && <Avisos />}
         {usuario && (

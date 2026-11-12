@@ -15,7 +15,7 @@ Requiere Node.js 24 (con el que se probó; en Node 20 antiguo falla jsdom) y la 
 ```bash
 npm install
 npm run dev      # http://localhost:5173
-npm test         # 16 pruebas
+npm test         # 22 pruebas
 npm run build
 ```
 
@@ -53,14 +53,19 @@ Vite redirige `/api` a la API (`vite.config.js`), así el SPA y la API comparten
 
 ## Pruebas
 
-`npm test` ejecuta 16 pruebas con Vitest:
+`npm test` ejecuta 22 pruebas con Vitest:
 
 - Interceptor de sesión: renueva y reintenta, un solo refresh con peticiones simultáneas, sesión limpia si falla, no reintenta en `/auth/login`, nada en `localStorage`.
 - `ProtectedRoute`: redirige sin sesión, espera mientras se restaura, muestra el contenido con sesión.
 - Permisos del tablero (Viewer frente a Editor/Owner) y cálculo de la posición al soltar una tarjeta.
 - Acceso rápido de desarrollo, detección y autocompletado de menciones (`@`) y lista de pasos (progreso, marcar, solo lectura).
+- Sonidos (apagados por defecto, se recuerdan, un audio roto no rompe nada), avisos flotantes (aparecen, se anuncian y se van solos) y ventanas (salida animada y Escape).
 
 La integración continua (`.github/workflows/ci.yml`) ejecuta las pruebas y la compilación.
+
+## Interfaz y movimiento
+
+Animaciones de ventanas, tarjetas y menús, esqueletos de carga, avisos flotantes, estados vacíos con ilustración, contadores que suben en el dashboard y **sonidos opcionales** (Web Audio, apagados por defecto; interruptor en el encabezado). Todo respeta "reducir movimiento" del sistema y está hecho en CSS puro, sin librerías. Decisiones y límites en [docs/decisiones/001-movimiento-y-sonido.md](docs/decisiones/001-movimiento-y-sonido.md).
 
 ## Estructura
 
@@ -70,7 +75,7 @@ src/
   pages/        Login, Register, Dashboard, ProjectBoard, Perfil, NotFound
   context/      AuthContext (sesión), ThemeContext (claro/oscuro)
   services/     api.js (Axios, interceptor, sesión en memoria) y un servicio por recurso
-  styles/       tokens.css (variables de diseño), responsive.css (reglas móviles)
+  styles/       tokens.css (variables de diseño), responsive.css (reglas móviles), motion.css (animaciones)
 ```
 
 ## Límites conocidos

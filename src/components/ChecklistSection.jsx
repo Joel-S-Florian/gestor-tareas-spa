@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ListChecks, X } from 'lucide-react';
 import { extrasService } from '../services/extrasService';
+import { reproducir } from '../services/sonido';
 
 // Lista de pasos dentro de una tarea, con barra de progreso. Solo Owner/Editor la modifican.
 export default function ChecklistSection({ tareaId, items, onCambio, puedeEditar, onError }) {
@@ -23,6 +24,7 @@ export default function ChecklistSection({ tareaId, items, onCambio, puedeEditar
   const alternar = async (item) => {
     const antes = items;
     onCambio(items.map((i) => (i.id === item.id ? { ...i, hecho: !i.hecho } : i)));
+    if (!item.hecho) reproducir('paso');
     try {
       await extrasService.actualizarItem(item.id, { hecho: !item.hecho });
     } catch {
@@ -54,7 +56,7 @@ export default function ChecklistSection({ tareaId, items, onCambio, puedeEditar
         {items.map((i) => (
           <label key={i.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, textDecoration: i.hecho ? 'line-through' : 'none', opacity: i.hecho ? 0.6 : 1 }}>
             <input type="checkbox" checked={i.hecho} disabled={!puedeEditar} onChange={() => alternar(i)} />
-            <span style={{ flex: 1 }}>{i.texto}</span>
+            <span className="paso-texto" style={{ flex: 1 }}>{i.texto}</span>
             {puedeEditar && (
               <button type="button" aria-label={`Quitar ${i.texto}`} onClick={(e) => { e.preventDefault(); quitar(i); }} style={{ background: 'none', border: 'none', color: 'var(--color-text-faint)', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
                 <X size={14} />

@@ -1,0 +1,93 @@
+/* Movimiento y detalles de interfaz (Lote D).
+   Regla: toda animación termina sola y respeta "reducir movimiento" (bloque final).
+   Se usa fill-mode "backwards" en las entradas para no congelar el transform y dejar que funcione el hover. */
+
+:root {
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-slow: 320ms;
+  --shadow-lift: 0 6px 18px rgba(15, 23, 42, 0.12);
+}
+[data-theme="dark"] { --shadow-lift: 0 8px 22px rgba(0, 0, 0, 0.45); }
+
+@keyframes gt-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes gt-fade-out { to { opacity: 0; } }
+@keyframes gt-pop-in { from { opacity: 0; transform: translateY(10px) scale(0.97); } to { opacity: 1; transform: none; } }
+@keyframes gt-out { to { opacity: 0; transform: translateY(6px) scale(0.98); } }
+@keyframes gt-fade-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes gt-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+@keyframes gt-spin { to { transform: rotate(360deg); } }
+@keyframes gt-badge { 0% { transform: scale(0.4); } 60% { transform: scale(1.3); } 100% { transform: scale(1); } }
+@keyframes gt-ring { 0%, 100% { transform: rotate(0); } 15% { transform: rotate(14deg); } 30% { transform: rotate(-12deg); } 45% { transform: rotate(8deg); } 60% { transform: rotate(-6deg); } 75% { transform: rotate(3deg); } }
+@keyframes gt-halo { 0% { box-shadow: 0 0 0 0 var(--accent); } 100% { box-shadow: 0 0 0 14px transparent; } }
+@keyframes gt-check { 0% { transform: scale(1); } 50% { transform: scale(1.35); } 100% { transform: scale(1); } }
+@keyframes gt-toast-in { from { opacity: 0; transform: translateY(14px) scale(0.96); } to { opacity: 1; transform: none; } }
+@keyframes gt-toast-out { to { opacity: 0; transform: translateX(18px); } }
+@keyframes gt-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+
+.spin { animation: gt-spin 0.8s linear infinite; }
+
+/* Entradas */
+.anim-fade-up { animation: gt-fade-up var(--dur-slow) var(--ease-out) backwards; animation-delay: calc(var(--i, 0) * 45ms); }
+.app-main { animation: gt-fade-up var(--dur-slow) var(--ease-out) backwards; }
+.auth__card { animation: gt-pop-in 420ms var(--ease-out) backwards; }
+
+/* Ventanas */
+.modal-overlay { animation: gt-fade var(--dur-base) ease backwards; backdrop-filter: blur(2px); }
+.modal { animation: gt-pop-in var(--dur-slow) var(--ease-out) backwards; }
+.modal-overlay--saliendo { animation: gt-fade-out 140ms ease forwards; }
+.modal-overlay--saliendo .modal { animation: gt-out 140ms ease forwards; }
+
+/* Botones: respuesta al pulsar */
+button { transition: transform var(--dur-fast) var(--ease-out), background-color var(--dur-fast), border-color var(--dur-fast), opacity var(--dur-fast); }
+button:not(:disabled):active { transform: scale(0.96); }
+
+/* Tarjetas del tablero */
+.task-card { transition: transform var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out), border-color var(--dur-fast), opacity var(--dur-fast); }
+.task-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lift); }
+.task-card--arrastrando { opacity: 0.45; transform: rotate(2deg) scale(0.97); box-shadow: none; }
+.task-card--recien { animation: gt-halo 750ms var(--ease-out); }
+.kanban-col { transition: outline-color var(--dur-fast), background-color var(--dur-base); outline: 2px dashed transparent; outline-offset: -4px; }
+.kanban-col--sobre { outline-color: var(--accent); background: var(--accent-dim) !important; }
+
+/* Proyectos: la barra de color pasa a ser el borde superior de la tarjeta */
+.project-card { display: block; padding: 0; overflow: hidden; transition: transform var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out), border-color var(--dur-fast); }
+.project-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lift); }
+.project-card__color { width: auto; border-radius: 0 !important; }
+.project-card__title { white-space: normal; display: -webkit-box !important; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* Esqueletos de carga */
+.skeleton { background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--border) 37%, var(--bg-tertiary) 63%); background-size: 200% 100%; animation: gt-shimmer 1.4s linear infinite; border-radius: 8px; }
+
+/* Campana de avisos */
+.campana--suena svg { transform-origin: 50% 0; animation: gt-ring 0.9s ease; }
+.badge-pop { animation: gt-badge 0.4s var(--ease-spring); }
+
+/* Casillas y pasos */
+input[type="checkbox"] { accent-color: var(--accent); cursor: pointer; }
+input[type="checkbox"]:checked { animation: gt-check 0.28s var(--ease-spring); }
+.paso-texto { transition: opacity var(--dur-base), text-decoration-color var(--dur-base); }
+
+/* Avisos flotantes */
+.toaster { position: fixed; right: 16px; bottom: 16px; display: flex; flex-direction: column; gap: 8px; z-index: 300; max-width: calc(100vw - 32px); }
+.toast { display: flex; align-items: center; gap: 10px; min-width: 240px; max-width: 360px; padding: 10px 12px; border-radius: 10px; background: var(--bg-secondary); border: 1px solid var(--border); border-left-width: 4px; box-shadow: var(--shadow-lift); font-size: 13px; color: var(--text-primary); animation: gt-toast-in 260ms var(--ease-out) backwards; }
+.toast--saliendo { animation: gt-toast-out 200ms ease forwards; }
+.toast--exito { border-left-color: var(--success); }
+.toast--error { border-left-color: var(--danger); }
+.toast--info { border-left-color: var(--info); }
+.toast__cerrar { margin-left: auto; background: none; border: none; color: var(--text-muted); cursor: pointer; display: grid; place-items: center; padding: 2px; }
+
+/* Estados vacíos */
+.vacio { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; padding: 18px 12px; color: var(--text-secondary); }
+.vacio svg { color: var(--accent); animation: gt-float 3.2s ease-in-out infinite; }
+.vacio__titulo { font-size: 13px; font-weight: 600; color: var(--text-primary); margin: 0; }
+.vacio__texto { font-size: 12px; margin: 0; color: var(--text-muted); }
+
+@media (max-width: 480px) { .toaster { left: 16px; right: 16px; } .toast { max-width: none; } }
+
+/* Reducir movimiento: sin animaciones ni transiciones, solo el estado final. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; animation-delay: 0ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}

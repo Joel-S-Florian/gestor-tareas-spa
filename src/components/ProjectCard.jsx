@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { FolderKanban, Users, CheckCircle2, Shield, Eye, Edit3 } from 'lucide-react';
 import './ProjectCard.css';
 
-export default function ProjectCard({ proyecto }) {
+export default function ProjectCard({ proyecto, indice = 0 }) {
   const getRolTexto = (rol) => {
     if (rol === undefined || rol === null) return 'Viewer';
     if (typeof rol === 'number') {
@@ -18,7 +18,7 @@ export default function ProjectCard({ proyecto }) {
   const progress = proyecto.totalTareas > 0 ? Math.round(((proyecto.tareasCompletadas || 0) / proyecto.totalTareas) * 100) : 0;
 
   return (
-    <Link to={`/proyectos/${proyecto.id}`} className="project-card" style={{ textDecoration: 'none' }}>
+    <Link to={`/proyectos/${proyecto.id}`} className="project-card anim-fade-up" style={{ textDecoration: 'none', '--i': indice }}>
       <div className="project-card__color" style={{ background: proyecto.color || 'var(--accent)', height: 4, borderRadius: '12px 12px 0 0' }} />
       <div className="project-card__body" style={{ padding: 16 }}>
         <div className="project-card__header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>

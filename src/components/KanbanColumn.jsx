@@ -1,13 +1,17 @@
 import { Plus, Circle, Loader2, CheckCircle2 } from 'lucide-react';
+import { useState } from 'react';
 import TaskCard from './TaskCard';
+import EmptyState from './EmptyState';
 import './KanbanColumn.css';
 
 const ICON_BY_STATE = { ToDo: Circle, InProgress: Loader2, Done: CheckCircle2 };
 
-export default function KanbanColumn({ titulo, estado, tareas, colorDot, onTaskClick, onDrop, onDragStart, puedeEditar, onAddTask }) {
-  const handleDragOver = (e) => { if (puedeEditar) e.preventDefault(); };
+export default function KanbanColumn({ titulo, estado, tareas, colorDot, onTaskClick, onDrop, onDragStart, puedeEditar, onAddTask, recienMovida }) {
+  const [sobre, setSobre] = useState(false);
+  const handleDragOver = (e) => { if (puedeEditar) { e.preventDefault(); setSobre(true); } };
   const handleDrop = (e) => {
     e.preventDefault();
+    setSobre(false);
     const tareaId = Number(e.dataTransfer.getData('text/tarea-id'));
     if (!tareaId) return;
     // Posición = cuántas tarjetas (sin contar la arrastrada) quedan por encima del puntero.
@@ -19,7 +23,7 @@ export default function KanbanColumn({ titulo, estado, tareas, colorDot, onTaskC
   const Icon = ICON_BY_STATE[estado] || Circle;
 
   return (
-    <div className="kanban-col" onDragOver={handleDragOver} onDrop={handleDrop} style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, minHeight: 320 }}>
+    <div className={`kanban-col${sobre ? ' kanban-col--sobre' : ''}`} onDragOver={handleDragOver} onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setSobre(false); }} onDrop={handleDrop} style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 12, padding: 12, minHeight: 320 }}>
       <div className="kanban-col__header" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
         <span style={{ width: 8, height: 8, borderRadius: 999, background: colorDot, display: 'inline-block' }} />
         <Icon size={14} style={{ color: colorDot }} />
@@ -32,10 +36,10 @@ export default function KanbanColumn({ titulo, estado, tareas, colorDot, onTaskC
         )}
       </div>
       <div className="kanban-col__list" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {tareas.map((t) => (
-          <TaskCard key={t.id} tarea={t} onClick={onTaskClick} onDragStart={onDragStart} arrastrable={puedeEditar} />
+        {tareas.map((t, i) => (
+          <TaskCard key={t.id} tarea={t} indice={i} destacada={t.id === recienMovida} onClick={onTaskClick} onDragStart={onDragStart} arrastrable={puedeEditar} />
         ))}
-        {tareas.length === 0 && <p className="kanban-col__vacio" style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center', padding: '16px 0' }}>Sin tareas</p>}
+        {tareas.length === 0 && <EmptyState dibujo="tareas" titulo="Sin tareas" texto={puedeEditar ? 'Arrastra una aquí o crea una nueva' : undefined} />}
       </div>
     </div>
   );

@@ -1,22 +1,25 @@
+import { useState } from 'react';
 import { Flag, MessageSquare, Paperclip, Calendar, ListChecks } from 'lucide-react';
 import './TaskCard.css';
 
 const PRIORIDAD_LABEL = { Baja: 'Baja', Media: 'Media', Alta: 'Alta' };
 const PRIORIDAD_COLOR = { Baja: 'var(--info)', Media: 'var(--warning)', Alta: 'var(--danger)' };
 
-export default function TaskCard({ tarea, onClick, onDragStart, arrastrable }) {
+export default function TaskCard({ tarea, onClick, onDragStart, arrastrable, destacada, indice = 0 }) {
+  const [arrastrando, setArrastrando] = useState(false);
   const vencida = tarea.fechaVencimiento && new Date(tarea.fechaVencimiento) < new Date() && tarea.estado !== 'Done';
 
   return (
     <div
-      className="task-card"
+      className={`task-card anim-fade-up${arrastrando ? ' task-card--arrastrando' : ''}${destacada ? ' task-card--recien' : ''}`}
       data-id={tarea.id}
       draggable={arrastrable}
-      onDragStart={(e) => onDragStart?.(e, tarea)}
+      onDragStart={(e) => { setArrastrando(true); onDragStart?.(e, tarea); }}
+      onDragEnd={() => setArrastrando(false)}
       onClick={() => onClick(tarea)}
       role="button"
       tabIndex={0}
-      style={{ cursor: 'pointer' }}
+      style={{ cursor: 'pointer', '--i': indice }}
     >
       <div className="task-card__top" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <span
